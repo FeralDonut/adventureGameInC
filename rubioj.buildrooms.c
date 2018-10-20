@@ -39,18 +39,7 @@
 
 /// NAME: ROOM_NAMES
 /// DESC: Global of possible ROOM names.
-char *ROOM_NAMES[TOTAL_NUM_ROOMS] = {
-        "Dixon_Rec_Center",
-        "Memorial_Union",
-        "Valley_Library",
-        "Reser_Stadium",
-        "DearBorn_Hall",
-        "Rogers_Hall",
-        "Kearney",
-        "Kelly_Engineering",
-        "Buxton_Dorm",
-        "West_Dining"
-    };
+char *ROOM_NAMES[TOTAL_NUM_ROOMS] = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "AABBCC" };
 //END_GLOBALS
 
 
