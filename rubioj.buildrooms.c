@@ -1,5 +1,5 @@
 /*
- Name: Jose-Antonio D. Rubio
+ name: Jose-Antonio D. Rubio
  OSUID: 932962915
  Class: 344-400
  Program 2 buildrooms
@@ -36,10 +36,10 @@ char* room_types[3] = { "START_ROOM", "MID_ROOM", "END_ROOM" };
 
 struct Room 
 {
-    int TotalConnections;
+    int total_connections;
     struct Room* Connections[MAX_ROOM_CONNECTIONS];
     char* type;
-    char Name[256];
+    char name[256];
 };
 
 struct Room room_list[MAX_NUM_ROOMS];
@@ -62,7 +62,7 @@ int IsGraphFull()
   for(i=0; i< MAX_NUM_ROOMS; i++)
   {
   
-    if (!(room_list[i].TotalConnections >= MIN_ROOM_CONNECTIONS))
+    if (!(room_list[i].total_connections >= MIN_ROOM_CONNECTIONS))
     {
         return FALSE;
     }
@@ -82,7 +82,7 @@ return TRUE;
 */
 int CanAddConnectionFrom(struct Room x) 
 {
-    if(x.TotalConnections == MAX_ROOM_CONNECTIONS)
+    if(x.total_connections == MAX_ROOM_CONNECTIONS)
     {
         return FALSE;
     }else
@@ -127,10 +127,10 @@ int ConnectionAlreadyExists(struct Room x, struct Room y)
 
   int i;
     //parse through list of connections
-    for(i = 0; i < x.TotalConnections;i++)
+    for(i = 0; i < x.total_connections;i++)
     {
         //check to see if the Rooms are already connected
-        if(strcmp(x.Connections[i]->Name,y.Name) == 0)
+        if(strcmp(x.Connections[i]->name,y.name) == 0)
         {
             return TRUE; 
         }
@@ -153,7 +153,7 @@ void ConnectRoom(struct Room x, struct Room y)
 
   for(i=0; i<MAX_NUM_ROOMS; i++)
   {
-    if(strcmp(room_list[i].Name,x.Name) == 0)
+    if(strcmp(room_list[i].name,x.name) == 0)
     {
         posx=i;
       
@@ -162,15 +162,15 @@ void ConnectRoom(struct Room x, struct Room y)
 
   for(i=0; i<MAX_NUM_ROOMS; i++)
   {
-    if(strcmp(room_list[i].Name,y.Name) == 0)
+    if(strcmp(room_list[i].name,y.name) == 0)
     {
         posy=i;
        
     }
   }
     //connect ROOMs and increment their connection counts
-    room_list[posx].Connections[x.TotalConnections] = &room_list[posy];
-    room_list[posx].TotalConnections++;
+    room_list[posx].Connections[x.total_connections] = &room_list[posy];
+    room_list[posx].total_connections++;
 
 }
 
@@ -187,7 +187,7 @@ int IsSameRoom(struct Room x, struct Room y)
 
 {   
 
-   if(strcmp(x.Name, y.Name)== 0)
+   if(strcmp(x.name, y.name)== 0)
   {
     return TRUE;
   }else
@@ -248,7 +248,7 @@ void MakeMyRooms()
 
    
     for(i = 0; i < MAX_NUM_ROOMS;i++){
-        room_list[i].TotalConnections = 0;
+        room_list[i].total_connections = 0;
 
         //set all Room connections to NULL
         int j;
@@ -266,8 +266,8 @@ void MakeMyRooms()
                 room_state[random_room] = TRUE;
 
                 //remove garbage data from ROOM arrray
-                memset(room_list[i].Name,'\0',sizeof(room_list[i].Name));
-                strcpy(room_list[i].Name,room_names[random_room]);
+                memset(room_list[i].name,'\0',sizeof(room_list[i].name));
+                strcpy(room_list[i].name,room_names[random_room]);
 
                 room_list[i].type = room_types[1];
                 break;
@@ -336,13 +336,13 @@ void MakeMyFiles()
    //parse through the room_list and make a file for each
     for(i = 0; i < MAX_NUM_ROOMS; i++)
     {
-       Room_File = fopen(room_list[i].Name,"w");
+       Room_File = fopen(room_list[i].name,"w");
         
-        fprintf(Room_File,"ROOM NAME: %s\n",room_list[i].Name);
+        fprintf(Room_File,"ROOM NAME: %s\n",room_list[i].name);
         //pare through each room struct connection to print to file
-        for(j = 0;j < room_list[i].TotalConnections;j++)
+        for(j = 0;j < room_list[i].total_connections;j++)
         {
-            fprintf(Room_File,"CONNECTION %d: %s\n",j+1,room_list[i].Connections[j]->Name);
+            fprintf(Room_File,"CONNECTION %d: %s\n",j+1,room_list[i].Connections[j]->name);
         }
         
         fprintf(Room_File,"ROOM TYPE: %s\n",room_list[i].type);
