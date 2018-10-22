@@ -1,11 +1,8 @@
 /*
- name: Jose-Antonio D. Rubio
+ Name: Jose-Antonio D. Rubio
  OSUID: 932962915
  Class: 344-400
- Program 1 Matrices 
- Comment: I ran the grading script and it went just fine although it did
-          take a bit of time and I am worried about timing out when you
-          go to grade it
+ Program 2 buildrooms
 */
 
 
