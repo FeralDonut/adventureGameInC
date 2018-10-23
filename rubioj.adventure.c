@@ -127,9 +127,9 @@ void ReadMyRooms()
 }
 
 
-/// NAME: FindRoomInArray
+/// NAME: StartRoomPosition
 /// DESC: Helper function to find the integer position of a room.
-int FindRoomInArray(char *Roomname)
+int StartRoomPosition(char *Roomname)
 {
     int RoomPos = -1;
     int i;
@@ -220,7 +220,7 @@ void ReCreateStructRooms()
                 //printf("Room typ:%s\n",FileValueBuffer);
             }
             else if(strcmp(FileLineBuffer,"CONNECTION ") == 0){ // fill in connections.
-                int conncRoomPos = FindRoomInArray(FileValueBuffer);
+                int conncRoomPos = StartRoomPosition(FileValueBuffer);
                 ReCreateConnection(i,conncRoomPos);
                 //printf("Room CONNECTION:%s,%d\n",FileValueBuffer,conncRoomPos);
             }
@@ -316,6 +316,7 @@ void RunGame()
     int step_count = 0;
     int step_tracker[1028];
     int i, j, k, current_position;
+    int is_connected = FALSE;
     struct Room current_room;
     char user_buffer[256];
 
@@ -352,19 +353,20 @@ void RunGame()
         scanf("%255s",user_buffer);
         printf("\n");
 
+        //reset connection checker
+        is_connected = FALSE;
+
         //check if input matches the name of a room.
         for(k = 0; k < current_room.total_connection; k++)
         {
-            //checking if user input matches a room connection
+            //checking if user input matches a roo
             if(strcmp(user_buffer,current_room.Connections[k]->name) == 0)
-            {
-                step_count++; 
-                //keep track of the path taken by storing the room user entered in
-                step_tracker[step_count] = FindRoomInArray(user_buffer); 
-                //move rooms
-                current_position = step_tracker[step_count]; 
+            { // if match
+                step_count++; // inc step count.
+                step_tracker[step_count] = StartRoomPosition(user_buffer); // record position of the room in room_list.
+                current_position = step_tracker[step_count]; // iterate to next room.
                 current_room = room_list[current_position];
-              //  is_connected = TRUE; 
+                is_connected = TRUE; // tell later conditions that room match happened.
                 if(current_room.type == "END_ROOM"){ // check if room is end room.
                     printf("YOU HAVE FOUND THE END ROOM. CONGRATULATIONS!\n");
                     printf("YOU TOOK %d STEPS. YOUR PATH TO VICTORY WAS:\n",step_count + 1);
@@ -375,20 +377,19 @@ void RunGame()
         }
 
         //see if user is asking for the time, TIME, or Time
-        if((strcmp(user_buffer,"time") == 0 || strcmp(user_buffer,"Time") == 0 || strcmp(user_buffer,"TIME") == 0) )
-        {
+        if((strcmp(user_buffer,"time") == 0 || strcmp(user_buffer,"Time") == 0 || strcmp(user_buffer,"TIME") == 0) ){
 
-            if( TimeThread() == TRUE)
-            {
+            if( TimeThread() == TRUE){
                 ReadCurrentTimeFile(); 
             }
             
-        }else
-        {
+        }
+        // error message to user.
+        else if(is_connected == FALSE){
             printf("HUH? I DON’T UNDERSTAND THAT ROOM. TRY AGAIN.\n\n");
         }
     }
-    while(TRUE); //infinite loop until END_ROOM is found
+    while(TRUE);
 }
 
 
