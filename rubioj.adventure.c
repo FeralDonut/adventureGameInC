@@ -1,3 +1,11 @@
+/*
+ name: Jose-Antonio D. Rubio
+ OSUID: 932962915
+ Class: 344-400
+ Program 2 adventure.c
+ Comment: A lot fo the references used in buildrooms were used here as well.
+*/
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -64,21 +72,24 @@ void SelectFolder()
     getcwd(current_directory, sizeof(current_directory));
     directory = opendir(current_directory);
 
-    //makes sure the current directory was opened to not throw erros.
+    //open current directory and parse through the files
     if (directory != NULL) {
-        while (directory_pointer= readdir(directory)) {// read all files.  
-            if (strstr(directory_pointer->d_name,fd) != NULL){
-                stat(directory_pointer->d_name, buffer);// read in stats of a folder
-                last_modified = buffer->st_mtime; // give me the last last_modified date of a file (long int)
+        while (directory_pointer= readdir(directory)) 
+        {  
+            if (strstr(directory_pointer->d_name,fd) != NULL)
+            {
+                //read stats of folder in and find the latest modified one
+                stat(directory_pointer->d_name, buffer);
+                last_modified = buffer->st_mtime; 
 
-                if(last_modified > latest){ // if this folder is the newest set as the newest.
+                if(last_modified > latest)
+                { 
                     latest = last_modified;
                     strcpy(folder_name,directory_pointer->d_name);
                 }
             }
         }
     }
-    //printf("This is the newest: %s\n",folder_name);
 }
 
 
@@ -86,9 +97,7 @@ void SelectFolder()
  NAME
     ReadMyRooms
  DESCRIPTION
-    Finds the lastest folder modified in the current directory 
- RESOURCE
-    http://stackoverflow.com/questions/612097/how-can-i-get-the-list-of-files-in-a-directory-using-c-or-c
+    Read in room struct info into room_list array
 */
 void ReadMyRooms()
 {
@@ -97,11 +106,12 @@ void ReadMyRooms()
     int i, j, k;
     
 
-       for(i = 0; i < MAX_NUM_ROOMS; i++)
-       {
-        //clear out garbage data in array
-        memset(room_list[i].name,'\0',sizeof(room_list[i].name)); 
-        room_list[i].total_connection = 0; 
+   //initialize room_list array to 0/NULL
+   for(i = 0; i < MAX_NUM_ROOMS; i++)
+   {
+    //clear out garbage data in array
+    memset(room_list[i].name,'\0',sizeof(room_list[i].name)); 
+    room_list[i].total_connection = 0; 
 
         for(j = 0; j < MAX_ROOM_CONNECTIONS; j++)
         {
@@ -127,72 +137,51 @@ void ReadMyRooms()
 }
 
 
-/// NAME: StartRoomPosition
-/// DESC: Helper function to find the integer position of a room.
-int StartRoomPosition(char *Roomname)
+/*
+ NAME
+    FindRoomInArray
+ DESCRIPTION
+    searches room_list array for matching name and returns the location in room_list array
+*/
+int FindRoomInArray(char* current_room_name)
 {
     int RoomPos = -1;
     int i;
 
     for(i = 0;i < MAX_NUM_ROOMS; i++ ){
-        if( strcmp(room_list[i].name,Roomname) == 0 ){ 
+        if( strcmp(room_list[i].name,current_room_name) == 0 ){ 
             return i;
         }
     }
-    return RoomPos; // return -1 if nothing was found.
 }
 
 
-/// NAME: CleanLabelFromStr
-/// DESC:  helper function, this returns a label of a file buffer, and value of the other half of it.
-void CleanLabelFromStr(char *LabelStr, char *ValueStr)
-{
-    int EOLpos = 0;
-    int i;
-
-    strtok(LabelStr,":");// cut label from value at :
-    strcpy(ValueStr,strtok(NULL,""));// set value from strtok.
-    ValueStr[strlen(ValueStr) - 1] = '\0';//append end of line
-    LabelStr[strlen(LabelStr) - 1] = '\0';
-
-    for(i = 0;i < strlen(ValueStr);i++){ // remove space form value string.
-        ValueStr[i] = ValueStr[i+1];
-    }
-
-    // printf("label: %s\n",LabelStr);
-    // printf("value: %s\n",ValueStr);
-}
-
-
-/// NAME: ReCreateConnection
-/// DESC: creates a connection FOR ONLY 1 of the structs.
-void ReCreateConnection(int roomPos1,int roomPos2)
-{
-    int totCon1 = room_list[roomPos1].total_connection;
-
-    room_list[roomPos1].Connections[totCon1] = &room_list[roomPos2]; // add address
-    room_list[roomPos1].total_connection++; // inc connection.
-}
-
-
-/// NAME: ReCreateStructRooms
-/// DESC: re create all structs from the files in the most recent directory.
-void ReCreateStructRooms()
+/*
+ NAME
+    MakeMyRooms
+ DECRIPTION
+    Creates room structs from the files.  Calls ReadMyRooms()
+ RESOURCE
+    Lecture 2.5 Strings inC 
+*/
+void MakeMyRooms()
 {
     char FileLineBuffer[256];
     char FileValueBuffer[256];
 
-    FILE *RoomFile;// file pointer
-    int i;
+    FILE *room_file;
+    int i, j, total_num_connections, connect_index;
 
-    ReadMyRooms(); // fill struct with file names
-    chdir(folder_name); // change to the directory containing all the files.
+    
+    ReadMyRooms(); 
+
+    chdir(folder_name);
 
     //dont need to check if file exists since we grabed it eariler
     for(i = 0;i < MAX_NUM_ROOMS;i++){
-        RoomFile = fopen(room_list[i].name,"r");//OPEN FILE
+        room_file = fopen(room_list[i].name,"r");//OPEN FILE
 
-        if(RoomFile == NULL){ // check if file was opened
+        if(room_file == NULL){ // check if file was opened
             printf("%s file was not accessed\n",room_list[i].name);
             return;
         }
@@ -201,10 +190,20 @@ void ReCreateStructRooms()
         memset(FileValueBuffer,'\0',sizeof(FileValueBuffer));
 
         // get each line from the file.
-        while(fgets(FileLineBuffer,sizeof(FileLineBuffer),RoomFile) != NULL){
+        while(fgets(FileLineBuffer,sizeof(FileLineBuffer),room_file) != NULL){
 
             //get the label and value from the line.
-            CleanLabelFromStr(FileLineBuffer,FileValueBuffer);
+            
+            strtok(FileLineBuffer,":");
+            strcpy(FileValueBuffer,strtok(NULL,""));
+            FileValueBuffer[strlen(FileValueBuffer) - 1] = '\0';
+            FileLineBuffer[strlen(FileLineBuffer) - 1] = '\0';
+
+            for(j = 0;j < strlen(FileValueBuffer);j++)
+            { 
+                FileValueBuffer[j] = FileValueBuffer[j+1];
+            }
+
             if(strcmp(FileLineBuffer,"ROOM TYP") == 0)
             { 
 
@@ -219,27 +218,19 @@ void ReCreateStructRooms()
                 }
                 //printf("Room typ:%s\n",FileValueBuffer);
             }
-            else if(strcmp(FileLineBuffer,"CONNECTION ") == 0){ // fill in connections.
-                int conncRoomPos = StartRoomPosition(FileValueBuffer);
-                ReCreateConnection(i,conncRoomPos);
-                //printf("Room CONNECTION:%s,%d\n",FileValueBuffer,conncRoomPos);
+            else if(strcmp(FileLineBuffer,"CONNECTION ") == 0)
+            { 
+                //add connections to rooms struct                
+                connect_index = FindRoomInArray(FileValueBuffer);
+                total_num_connections = room_list[i].total_connection;
+                room_list[i].Connections[total_num_connections] = &room_list[connect_index]; 
+                room_list[i].total_connection++; 
+
             }
         }
-        fclose(RoomFile);//END FILE
+        fclose(room_file);
     }
-    chdir(".."); // go back to main directory.
-}
-
-
-
-/// NAME: printStepPath
-/// DESC: from a array of ints get each name and print their names.
-void printStepPath(int *Path,int steps)
-{
-    int i;
-    for(i = 0;i < steps + 1;i++){ // for amount of steps print a name.
-        printf("%s\n",room_list[Path[i]].name);
-    }
+    chdir(".."); 
 }
 
 /// NAME: CreateCurrentTimeFile
@@ -289,33 +280,45 @@ void ReadCurrentTimeFile()
 }
 
 
-/// NAME: TimeThread
-/// DESC: creates a seperate thread to write a file containing local time.
+/*
+ NAME 
+    TimeThread
+ DESCRIPTION
+    creates a seperate thread to write a file containing local time.
+ RESOURCE
+    Lecture 2.3
+*/
 int TimeThread()
 {
-    pthread_t WriteTimeFile_Thread; // holder for the thread that will contain the function.
-    pthread_mutex_lock(&time_mutex); // this thread cannot be used untill its done running.
+    pthread_t time_thread; 
+    //lock
+    pthread_mutex_lock(&time_mutex);
 
     // if something went wrong dont continue.
-    if(pthread_create(&WriteTimeFile_Thread,NULL,CreateCurrentTimeFile,NULL) != 0){ // begin running write file function.
+    if(pthread_create(&time_thread,NULL,CreateCurrentTimeFile,NULL) != 0){ // begin running write file function.
         printf("Error from thread!");
         return FALSE;
     }
 
     //once done unlock the mutex.
     pthread_mutex_unlock(&time_mutex);
-    // prevent runnaway processes.
-    pthread_join(WriteTimeFile_Thread,NULL);
+   
+    pthread_join(time_thread,NULL);
     return TRUE;
 }
 
-/// NAME: RunGame
-/// DESC: singleton to run the game.
+/*
+ NAME
+    ReadMyRooms
+ DESCRIPTION
+    Function that drives the game - finds start_room, displays info for each room checks users inputs and will 
+    moves accordingly, keeps track of steps taken, keeps track of path,, prints end path and steps and displays time
+*/
 void RunGame()
 {
     int step_count = 0;
     int step_tracker[1028];
-    int i, j, k, current_position;
+    int i, j, k, n, current_index;
     int is_connected = FALSE;
     struct Room current_room;
     char user_buffer[256];
@@ -331,8 +334,8 @@ void RunGame()
     
     //display room info to user
     do{        
-        current_position = step_tracker[step_count];
-        current_room = room_list[current_position];
+        current_index = step_tracker[step_count];
+        current_room = room_list[current_index];
 
         printf("CURRENT LOCATION: %s\n",current_room.name);
 
@@ -361,18 +364,28 @@ void RunGame()
         {
             //checking if user input matches a roo
             if(strcmp(user_buffer,current_room.Connections[k]->name) == 0)
-            { // if match
-                step_count++; // inc step count.
-                step_tracker[step_count] = StartRoomPosition(user_buffer); // record position of the room in room_list.
-                current_position = step_tracker[step_count]; // iterate to next room.
-                current_room = room_list[current_position];
-                is_connected = TRUE; // tell later conditions that room match happened.
-                if(current_room.type == "END_ROOM"){ // check if room is end room.
+            { 
+                step_count++; 
+                //keep track of the path taken by storing the room user entered in
+                step_tracker[step_count] = FindRoomInArray(user_buffer); 
+                //move index to next room
+                current_index = step_tracker[step_count]; 
+                current_room = room_list[current_index];
+                //keeps HUH? message from being thrown later
+                is_connected = TRUE;
+                //check to see if END_ROOM is found
+                if(current_room.type == "END_ROOM")
+                { 
                     printf("YOU HAVE FOUND THE END ROOM. CONGRATULATIONS!\n");
-                    printf("YOU TOOK %d STEPS. YOUR PATH TO VICTORY WAS:\n",step_count + 1);
-                    printStepPath(step_tracker,step_count);
+                    printf("YOU TOOK %d STEPS. YOUR PATH TO VICTORY WAS:\n",step_count);
+
+                    //print the path n = 1 so start room is not displayed
+                    for(n = 1; n < step_count + 1; n++)
+                    { // for amount of steps print a name.
+                        printf("%s\n",room_list[step_tracker[n]].name);
+                    }
                     return;
-                }
+                }             
             }
         }
 
@@ -398,41 +411,8 @@ void RunGame()
 int main(void)
 {
     SelectFolder();
-    ReCreateStructRooms();    
+    MakeMyRooms();    
     RunGame();
-    //PrintRooms_DEBUG();
+
 }
 
-/*
-/// NAME: PrintRooms_DEBUG
-/// DESC: DEBUG FUNCTION lets me check if a room_list is correct.
-void PrintRooms_DEBUG()
-{
-    int i,j;
-    for(i = 0; i < MAX_NUM_ROOMS;i++){
-        printf("\n%d: ",i);
-        printf("name: %s",room_list[i].name);
-        printf("\ntotal_connection: %d",room_list[i].total_connection);
-        if(room_list[i].total_connection > 0){
-            printf("\n\tConnections:");
-            for(j = 0;j < room_list[i].total_connection;j++){
-                printf("\n\tC%d:%s",j,room_list[i].Connections[j]->name);
-                //printf("\n\tC%d connectTotal: %d",j,room_list[i].Connections[j]->total_connection);
-            }
-        }
-
-        if(room_list[i].type ==" START_R"OOM){
-            printf("\nRoom Type: START_ROOM");
-        }
-        else if(room_list[i].type ==" END_ROO"M){
-            printf("\nRoom Type: END_ROOM");
-        }
-        else{
-            printf("\nRoom Type: MID_ROOM");
-        }
-        printf("\n");
-    }
-    printf("\n");
-}
-
-*/
