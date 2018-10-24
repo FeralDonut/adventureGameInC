@@ -1,10 +1,4 @@
-/*
- name: Jose-Antonio D. Rubio
- OSUID: 932962915
- Class: 344-400
- Program 2 adventure.c
- Comment: A lot fo the references used in buildrooms were used here as well.
-*/
+
 
 #include <stdio.h>
 #include <string.h>
