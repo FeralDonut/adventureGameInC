@@ -166,8 +166,8 @@ int FindRoomInArray(char* current_room_name)
 */
 void MakeMyRooms()
 {
-    char FileLineBuffer[256];
-    char FileValueBuffer[256];
+    char line_from_file[256];
+    char data_from_line[256];
 
     FILE *room_file;
     int i, j, total_num_connections, connect_index;
@@ -181,47 +181,42 @@ void MakeMyRooms()
     for(i = 0;i < MAX_NUM_ROOMS;i++){
         room_file = fopen(room_list[i].name,"r");//OPEN FILE
 
-        if(room_file == NULL){ // check if file was opened
-            printf("%s file was not accessed\n",room_list[i].name);
-            return;
-        }
-
-        memset(FileLineBuffer,'\0',sizeof(FileLineBuffer));
-        memset(FileValueBuffer,'\0',sizeof(FileValueBuffer));
+        memset(line_from_file,'\0',sizeof(line_from_file));
+        memset(data_from_line,'\0',sizeof(data_from_line));
 
         // get each line from the file.
-        while(fgets(FileLineBuffer,sizeof(FileLineBuffer),room_file) != NULL){
+        while(fgets(line_from_file,sizeof(line_from_file),room_file) != NULL){
 
             //get the label and value from the line.
             
-            strtok(FileLineBuffer,":");
-            strcpy(FileValueBuffer,strtok(NULL,""));
-            FileValueBuffer[strlen(FileValueBuffer) - 1] = '\0';
-            FileLineBuffer[strlen(FileLineBuffer) - 1] = '\0';
+            strtok(line_from_file,":");
+            strcpy(data_from_line,strtok(NULL,""));
+            data_from_line[strlen(data_from_line) - 1] = '\0';
+            line_from_file[strlen(line_from_file) - 1] = '\0';
 
-            for(j = 0;j < strlen(FileValueBuffer);j++)
+            for(j = 0;j < strlen(data_from_line);j++)
             { 
-                FileValueBuffer[j] = FileValueBuffer[j+1];
+                data_from_line[j] = data_from_line[j+1];
             }
 
-            if(strcmp(FileLineBuffer,"ROOM TYP") == 0)
+            if(strcmp(line_from_file,"ROOM TYP") == 0)
             { 
 
-                if(strcmp(FileValueBuffer,"START_ROOM") == 0){
+                if(strcmp(data_from_line,"START_ROOM") == 0){
                     room_list[i].type = "START_ROOM";
                 }
-                else if(strcmp(FileValueBuffer,"END_ROOM") == 0){
+                else if(strcmp(data_from_line,"END_ROOM") == 0){
                     room_list[i].type = "END_ROOM";
                 }
                 else{
                     room_list[i].type = "MID_ROOM";
                 }
-                //printf("Room typ:%s\n",FileValueBuffer);
+                //printf("Room typ:%s\n",data_from_line);
             }
-            else if(strcmp(FileLineBuffer,"CONNECTION ") == 0)
+            else if(strcmp(line_from_file,"CONNECTION ") == 0)
             { 
                 //add connections to rooms struct                
-                connect_index = FindRoomInArray(FileValueBuffer);
+                connect_index = FindRoomInArray(data_from_line);
                 total_num_connections = room_list[i].total_connection;
                 room_list[i].Connections[total_num_connections] = &room_list[connect_index]; 
                 room_list[i].total_connection++; 
@@ -233,83 +228,73 @@ void MakeMyRooms()
     chdir(".."); 
 }
 
-/// NAME: CreateCurrentTimeFile
-/// DESC: Creates a time file in current diretory.
-/// SOURCE: http://stackoverflow.com/questions/5141960/get-the-current-time-in-c
-void* CreateCurrentTimeFile()
+/*
+ NAME
+    CurrentTimeFile()
+ DESCRIPTION
+    reads the current time, creates a folder and writes the current time to it
+ SOURCE
+   http://stackoverflow.com/questions/5141960/get-the-current-time-in-c
+*/
+void* CurrentTimeFile()
 {
-    char TimeStr[256];
-    time_t CurrTime;
-    struct tm * TimeInfo;
-    FILE *TimeFile;
+    char time_holder[256];
+    time_t raw_time;
+    struct tm * time_info;
+    FILE *time_file_write;
 
-    memset(TimeStr,'\0',sizeof(TimeStr)); // clear time string of garbage.
+    // clear time_holder array of garbage data
+    memset(time_holder,'\0',sizeof(time_holder)); 
 
-    time(&CurrTime); // get current time.
-    TimeInfo = localtime(&CurrTime); // put time into an easily accessable struct.
-    strftime(TimeStr,256, "%I:%M%P %A, %B %d, %Y", TimeInfo); // format string.
-    //printf("\n%s\n\n",TimeStr);
-
-    TimeFile = fopen(time_file,"w");//Will create or overwrite a file
-    fprintf(TimeFile,"%s\n",TimeStr); // print time to file.
-    fclose(TimeFile);
-
-    return NULL;
+    time(&raw_time); 
+    time_info = localtime(&raw_time); 
+    strftime(time_holder,256, "%I:%M%P %A, %B %d, %Y", time_info); 
+  
+    //create a file to write to, write to it
+    time_file_write = fopen(time_file,"w");
+    fprintf(time_file_write,"%s\n",time_holder); 
+    fclose(time_file_write);
 }
-
-/// NAME: ReadCurrentTimeFile
-/// DESC: reads in a file and display the current time.
-void ReadCurrentTimeFile()
-{
-    char Buffer[256];
-    FILE *TimeFile;
-
-    memset(Buffer,'\0',sizeof(Buffer)); // clear buffer of garbage.
-
-    TimeFile = fopen(time_file,"r"); // readin a file.
-    if(TimeFile == NULL){// check if the file exists.
-        printf("%s was not accessed.\n", time_file);
-        return;
-    }
-
-    //read in each line in the file (there should only be one.)
-    while(fgets(Buffer,256,TimeFile) != NULL){
-        printf("%s\n",Buffer); // print the line.
-    }
-    fclose(TimeFile);
-}
-
 
 /*
  NAME 
-    TimeThread
+    DisplayTime
  DESCRIPTION
-    creates a seperate thread to write a file containing local time.
+    creates a seperate thread, calls CurrentTimeFile function and reads what is writen to a time file
  RESOURCE
     Lecture 2.3
+    https://www.geeksforgeeks.org/multithreading-c-2/
 */
-int TimeThread()
+void DisplayTime()
 {
+    char buffer[256];
+    FILE* time_file_read;
     pthread_t time_thread; 
-    //lock
+    // clear buffer array of garbage data
+    memset(buffer,'\0',sizeof(buffer)); 
+    
+    //lock to run pthread_create and then unlock
     pthread_mutex_lock(&time_mutex);
-
-    // if something went wrong dont continue.
-    if(pthread_create(&time_thread,NULL,CreateCurrentTimeFile,NULL) != 0){ // begin running write file function.
-        printf("Error from thread!");
-        return FALSE;
-    }
-
-    //once done unlock the mutex.
+    pthread_create(&time_thread,NULL,CurrentTimeFile,NULL);
     pthread_mutex_unlock(&time_mutex);
    
     pthread_join(time_thread,NULL);
-    return TRUE;
+
+    //open the file to read
+    time_file_read = fopen(time_file,"r"); 
+
+    //read and print the line in the file
+    while(fgets(buffer,256,time_file_read) != NULL){
+        printf("%s\n",buffer); 
+    }
+    fclose(time_file_read);
 }
+
+
 
 /*
  NAME
-    ReadMyRooms
+    RunGame()
  DESCRIPTION
     Function that drives the game - finds start_room, displays info for each room checks users inputs and will 
     moves accordingly, keeps track of steps taken, keeps track of path,, prints end path and steps and displays time
@@ -333,7 +318,9 @@ void RunGame()
     }
     
     //display room info to user
-    do{        
+    //loop until END ROOM is found     
+      while(TRUE)
+      {
         current_index = step_tracker[step_count];
         current_room = room_list[current_index];
 
@@ -390,19 +377,15 @@ void RunGame()
         }
 
         //see if user is asking for the time, TIME, or Time
-        if((strcmp(user_buffer,"time") == 0 || strcmp(user_buffer,"Time") == 0 || strcmp(user_buffer,"TIME") == 0) ){
-
-            if( TimeThread() == TRUE){
-                ReadCurrentTimeFile(); 
-            }
-            
+        if((strcmp(user_buffer,"time") == 0 || strcmp(user_buffer,"Time") == 0 || strcmp(user_buffer,"TIME") == 0) )
+        {
+                DisplayTime();
         }
         // error message to user.
         else if(is_connected == FALSE){
             printf("HUH? I DON’T UNDERSTAND THAT ROOM. TRY AGAIN.\n\n");
         }
     }
-    while(TRUE);
 }
 
 
@@ -414,5 +397,6 @@ int main(void)
     MakeMyRooms();    
     RunGame();
 
+return 0;
 }
 
