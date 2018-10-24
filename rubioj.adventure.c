@@ -90,6 +90,8 @@ void SelectFolder()
             }
         }
     }
+    free(buffer);
+    free(directory_pointer);
 }
 
 
