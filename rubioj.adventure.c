@@ -376,6 +376,8 @@ void RunGame()
         if((strcmp(user_buffer,"time") == 0 || strcmp(user_buffer,"Time") == 0 || strcmp(user_buffer,"TIME") == 0) )
         {
                 DisplayTime();
+               //delete time file that was created
+                remove(time_file);
         }
         // error message to user.
         else if(is_connected == FALSE){
